@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/main"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#D3D3D3"
+        tools:context=".MainActivity">
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="90dp"
+              android:text="Handwriting app" android:textSize="30sp" android:id="@+id/textView2"
+              android:textAlignment="center" android:gravity="center_horizontal"/>
+    <com.nex3z.fingerpaintview.FingerPaintView android:layout_width="290dp" android:layout_height="290dp"
+                                               android:id="@+id/fingerPaintView"
+                                               tools:layout_editor_absoluteY="158dp"
+                                               android:background="@color/white"
+                                               tools:layout_editor_absoluteX="90dp" android:layout_gravity="center_horizontal"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="55dp"
+                  tools:layout_editor_absoluteY="359dp" tools:layout_editor_absoluteX="73dp"
+                  android:orientation="horizontal" android:layout_marginTop="30dp">
+
+        <Button
+                android:text=" . "
+                android:layout_width="wrap_content"
+                android:layout_height="55dp" android:id="@+id/Period"
+                android:layout_weight="1"/>
+        <Button
+                android:text=" , "
+                android:layout_width="wrap_content"
+                android:layout_height="55dp" android:id="@+id/comma"
+                android:layout_weight="1"/>
+        <Button
+                android:text=" undo "
+                android:layout_width="wrap_content"
+                android:layout_height="55dp" android:id="@+id/Clear"
+                android:layout_weight="2"
+                tools:ignore="TouchTargetSizeCheck"/>
+    </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="55dp"
+                      tools:layout_editor_absoluteY="359dp" tools:layout_editor_absoluteX="73dp"
+                      android:orientation="horizontal">
+        <Button
+                android:text="Space bar"
+                android:layout_width="wrap_content"
+                android:layout_height="55dp" android:id="@+id/space"
+                android:layout_weight="2"
+        />
+        <Button
+                android:text="Clear all"
+                android:layout_width="wrap_content"
+                android:layout_height="55dp" android:id="@+id/ClearAll"
+                android:layout_weight="2"
+                tools:ignore="TouchTargetSizeCheck"/>
+    </LinearLayout>
+    <TextView
+            android:text="Saved message typed so far"
+            android:layout_width="331dp"
+            android:layout_height="250dp" android:id="@+id/Message"
+            android:layout_marginTop="20dp"
+            android:background="@color/white"
+            tools:layout_editor_absoluteY="567dp" tools:layout_editor_absoluteX="40dp"
+            android:layout_gravity="center_horizontal" android:textSize="24sp"/>
+    <TextView
+            android:text="last input prediction strength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:id="@+id/Prob"
+            tools:layout_editor_absoluteY="376dp" tools:layout_editor_absoluteX="354dp"
+            android:layout_gravity="center_horizontal" android:textSize="24sp"/>
+</LinearLayout>
