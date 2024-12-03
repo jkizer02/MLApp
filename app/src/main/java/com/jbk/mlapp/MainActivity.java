@@ -1,8 +1,11 @@
 package com.jbk.mlapp;
 
+import android.content.res.AssetFileDescriptor;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
+import org.tensorflow.lite.Interpreter;
 
 import android.os.Environment;
 import android.util.Log;
@@ -22,6 +25,7 @@ import android.os.Handler;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Timer;
@@ -31,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
 
     // Logging and file name constants
     private static final String TAG = "MappedByteBuffer";
-    private static final String MODULE_FILE_NAME = "develocity-gradle-plugin-3.17.4.module";
 
     // This makes it so it can handle the .module file
     private MappedByteBuffer mappedByteBuffer;
@@ -39,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private Runnable runnable;
     private long delay = 1000;
+    private Interpreter interpreter;
+
 
     //public Timer time = new Timer();
     public FingerPaintView finger;
@@ -97,9 +102,36 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             String text = message.getText().toString();
-                            //text=text+predMap.charAt(getPredictions());
-                            text=text+predMap.charAt(12);
+                            //save image to bitmap
+                            Bitmap img= Bitmap.createBitmap(finger.getWidth(),finger.getHeight(),Bitmap.Config.ARGB_8888);
+                            img = finger.exportToBitmap(28,28);
+                            int[] pixels= new int[28*28];
+
+                            //convert img to byte data
+                            img.getPixels(pixels,0,28,0,0,28,28);
+                            ByteBuffer buffer = ByteBuffer.allocate(pixels.length);
+
+                            for (int i=0;i<pixels.length;i++) {
+                                int pixel = pixels[i];
+                                int red = (pixel >> 16) & 0xFF;
+                                int green = (pixel >> 8) & 0xFF;
+                                int blue = pixel & 0xFF;
+                                int gray = (int) (0.299 * red + 0.587 * green + 0.114 * blue);
+                                gray = Math.max(0, Math.min(255, gray));
+                                buffer.put((byte) gray);
+                            }
+                            buffer.rewind(); // Reset position to the beginning
+
+                            //call model to get output
+                            float[][] probs = doInference(buffer);
+
+                            int prediction = getPredictions(probs[0]);
+                            //add output to message
+                            prob.setText(String.valueOf(probs[prediction]));
+                            text=text+predMap.charAt(prediction);
+                            //text=text+predMap.charAt(12);
                             message.setText(text);
+
                             finger.clear();
                         }
                     };
@@ -121,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //clear all of the message
+        //clear all the message
         clearall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -141,14 +173,15 @@ public class MainActivity extends AppCompatActivity {
         message.setText("");
 
         //set mapped byte buffer
+
         try {
-            // Load the .module file into memory
-            mappedByteBuffer = loadMappedByteBufferFromFile(MODULE_FILE_NAME);
-            Log.d(TAG, "MappedByteBuffer is loaded: " + mappedByteBuffer.isLoaded());
+            interpreter = new Interpreter(loadModelFile());
+            Log.d(TAG,"loaded");
         } catch (IOException e) {
-            // If it fails error message pops up
-            Log.e(TAG, "Error loading .module file", e);
+            Log.d(TAG,"Didnt");
+            throw new RuntimeException(e);
         }
+
 
 
         //set finger paint pen values.
@@ -163,21 +196,33 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
     }
-    private MappedByteBuffer loadMappedByteBufferFromFile(String fileName) throws IOException {
-        // Finds the file in downloads
-        File downloadsDir = null;
-        downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File moduleFile = new File(downloadsDir, fileName);
 
-        if (!moduleFile.exists()) {
-            // Throws exception if the file isnt found
-            throw new IOException("File not found: " + moduleFile.getAbsolutePath());
-        }
-
-        // Opens the file and map it into memory
-        FileInputStream inputStream = new FileInputStream(moduleFile);
-        FileChannel fileChannel = inputStream.getChannel();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+    public float[][] doInference(ByteBuffer input)
+    {
+        float[][] output = new float[1][62];
+        interpreter.run(input,output);
+        return output;
     }
+    public int getPredictions(float[] probs){
+        int max=0;
+        for(int i=0;i<probs.length;i++){
+            if(probs[i]>probs[max]){
+                max=i;
+            }
+        }
+        return max;
+    }
+    private MappedByteBuffer loadModelFile() throws IOException
+    {
+        AssetFileDescriptor assetFileDescriptor =  this.getAssets().openFd("emnist_model.tflite");
+        FileInputStream fileInputStream = new FileInputStream(assetFileDescriptor.getFileDescriptor());
+        FileChannel fileChannel = fileInputStream.getChannel();
+        long startOffset = assetFileDescriptor.getStartOffset();
+        long length = assetFileDescriptor.getLength();
+
+        //return the mapped byte buffer
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY,startOffset,length);
+    }
+
 
 }
