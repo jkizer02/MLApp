@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.widget.EditText;
 import org.tensorflow.lite.Interpreter;
 
 import android.os.Environment;

@@ -13,11 +13,16 @@
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="90dp"
               android:text="Handwriting app" android:textSize="30sp" android:id="@+id/textView2"
               android:textAlignment="center" android:gravity="center_horizontal"/>
-    <com.nex3z.fingerpaintview.FingerPaintView android:layout_width="290dp" android:layout_height="290dp"
-                                               android:id="@+id/fingerPaintView"
-                                               tools:layout_editor_absoluteY="158dp"
-                                               android:background="@color/white"
-                                               tools:layout_editor_absoluteX="90dp" android:layout_gravity="center_horizontal"/>
+    <TextView
+            android:text="Saved message typed so far"
+            android:layout_width="331dp"
+            android:inputType="textAutoCorrect"
+            android:layout_height="250dp" android:id="@+id/Message"
+            android:layout_marginTop="20dp"
+            android:background="@color/white"
+            tools:layout_editor_absoluteY="567dp" tools:layout_editor_absoluteX="40dp"
+            android:layout_gravity="center_horizontal" android:textSize="24sp"/>
+
     <LinearLayout android:layout_width="match_parent" android:layout_height="55dp"
                   tools:layout_editor_absoluteY="359dp" tools:layout_editor_absoluteX="73dp"
                   android:orientation="horizontal" android:layout_marginTop="30dp">
@@ -55,14 +60,11 @@
                 android:layout_weight="2"
                 tools:ignore="TouchTargetSizeCheck"/>
     </LinearLayout>
-    <TextView
-            android:text="Saved message typed so far"
-            android:layout_width="331dp"
-            android:layout_height="250dp" android:id="@+id/Message"
-            android:layout_marginTop="20dp"
-            android:background="@color/white"
-            tools:layout_editor_absoluteY="567dp" tools:layout_editor_absoluteX="40dp"
-            android:layout_gravity="center_horizontal" android:textSize="24sp"/>
+    <com.nex3z.fingerpaintview.FingerPaintView android:layout_width="290dp" android:layout_height="290dp"
+                                               android:id="@+id/fingerPaintView"
+                                               tools:layout_editor_absoluteY="158dp"
+                                               android:background="@color/white"
+                                               tools:layout_editor_absoluteX="90dp" android:layout_gravity="center_horizontal"/>
     <TextView
             android:text="last input prediction strength"
             android:layout_width="wrap_content"
