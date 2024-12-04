@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
 
         //set finger paint pen values.
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(45);
+        p.setStrokeWidth(60);
         p.setColor(Color.BLACK);
         finger.setPen(p);
 
