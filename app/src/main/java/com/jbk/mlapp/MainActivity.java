@@ -26,8 +26,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -108,24 +110,27 @@ public class MainActivity extends AppCompatActivity {
                             int[] pixels= new int[28*28];
 
                             //convert img to byte data
-                            img.getPixels(pixels,0,28,0,0,28,28);
-                            ByteBuffer buffer = ByteBuffer.allocate(pixels.length);
+                            img.getPixels(pixels,0,img.getWidth(),0,0,img.getWidth(),img.getHeight());
+                            ByteBuffer buffer = ByteBuffer.allocateDirect(pixels.length*4);
+                            buffer.order(ByteOrder.nativeOrder());
+
 
                             for (int i=0;i<pixels.length;i++) {
                                 int pixel = pixels[i];
                                 int red = (pixel >> 16) & 0xFF;
                                 int green = (pixel >> 8) & 0xFF;
                                 int blue = pixel & 0xFF;
-                                int gray = (int) (0.299 * red + 0.587 * green + 0.114 * blue);
-                                gray = Math.max(0, Math.min(255, gray));
-                                buffer.put((byte) gray);
+                                float gray = (red + green + blue)/3;
+                                buffer.putFloat((255 - gray) / 255.0f);
+                                //buffer.putFloat(gray);
+
                             }
                             buffer.rewind(); // Reset position to the beginning
 
                             //call model to get output
-                            float[][] probs = doInference(buffer);
+                            float[] probs = doInference(buffer);
 
-                            int prediction = getPredictions(probs[0]);
+                            int prediction = getPredictions(probs);
                             //add output to message
                             prob.setText(String.valueOf(probs[prediction]));
                             text=text+predMap.charAt(prediction);
@@ -186,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
 
         //set finger paint pen values.
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(20);
+        p.setStrokeWidth(45);
         p.setColor(Color.BLACK);
         finger.setPen(p);
 
@@ -197,11 +202,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public float[][] doInference(ByteBuffer input)
+    public float[] doInference(ByteBuffer input)
     {
         float[][] output = new float[1][62];
         interpreter.run(input,output);
-        return output;
+        //interpreter.invoke();
+        Log.d(TAG, "Output tensor shape: " + Arrays.toString(interpreter.getOutputTensor(0).shape()));
+        return output[0];
     }
     public int getPredictions(float[] probs){
         int max=0;
