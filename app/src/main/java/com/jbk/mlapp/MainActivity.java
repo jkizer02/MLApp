@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.widget.EditText;
+import android.speech.tts.TextToSpeech;
 import org.tensorflow.lite.Interpreter;
 
 import android.os.Environment;
@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
     //public Timer time = new Timer();
     public FingerPaintView finger;
+    private TextToSpeech textToSpeech;
     //This maps the predicted class (a number from 0-61 to the correct character
     public String predMap="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     @Override
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         Button period = findViewById(R.id.Period);
         Button comma = findViewById(R.id.comma);
         Button clearall = findViewById(R.id.ClearAll);
+        Button speak = findViewById(R.id.Speak);
         finger = findViewById(R.id.fingerPaintView);
         TextView message = findViewById(R.id.Message);
         TextView prob = findViewById(R.id.Prob);
@@ -72,6 +74,18 @@ public class MainActivity extends AppCompatActivity {
         //set initial content and onclick/ontouch listeners
 
         prob.setText("0.0");
+
+        // Initialize TTS engine and sets language to English
+        textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    textToSpeech.setLanguage(Locale.US);
+                } else {
+                    Log.e(TAG, "TTS Failed!!!");
+                }
+            }
+        });
 
         //undo previous action iff message!=null
         bks.setOnClickListener(new View.OnClickListener() {
@@ -111,20 +125,17 @@ public class MainActivity extends AppCompatActivity {
                             int[] pixels= new int[28*28];
 
                             //convert img to byte data
-                            img.getPixels(pixels,0,img.getWidth(),0,0,img.getWidth(),img.getHeight());
+                            img.getPixels(pixels,0,28,0,0,28,28);
                             ByteBuffer buffer = ByteBuffer.allocateDirect(pixels.length*4);
                             buffer.order(ByteOrder.nativeOrder());
-
 
                             for (int i=0;i<pixels.length;i++) {
                                 int pixel = pixels[i];
                                 int red = (pixel >> 16) & 0xFF;
                                 int green = (pixel >> 8) & 0xFF;
                                 int blue = pixel & 0xFF;
-                                float gray = (red + green + blue)/3;
-                                buffer.putFloat((255 - gray) / 255.0f);
-                                //buffer.putFloat(gray);
-
+                                float gray = (red + green + blue) / 3;
+                                buffer.putFloat((255-gray)/255.0f);
                             }
                             buffer.rewind(); // Reset position to the beginning
 
@@ -133,7 +144,8 @@ public class MainActivity extends AppCompatActivity {
 
                             int prediction = getPredictions(probs);
                             //add output to message
-                            prob.setText(String.valueOf(probs[prediction]));
+                            String formattedProb = String.format("%.2f", probs[prediction] * 100);
+                            prob.setText(formattedProb + "%");
                             text=text+predMap.charAt(prediction);
                             //text=text+predMap.charAt(12);
                             message.setText(text);
@@ -175,6 +187,19 @@ public class MainActivity extends AppCompatActivity {
                 message.setText(text);
             }
         });
+
+        // Speaks the current message
+        speak.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String text = message.getText().toString();
+                if (!text.isEmpty()) {
+                    textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+                }
+            }
+        });
+
+
         //set initial text to nothing
         message.setText("");
 
@@ -207,8 +232,6 @@ public class MainActivity extends AppCompatActivity {
     {
         float[][] output = new float[1][62];
         interpreter.run(input,output);
-        //interpreter.invoke();
-        Log.d(TAG, "Output tensor shape: " + Arrays.toString(interpreter.getOutputTensor(0).shape()));
         return output[0];
     }
     public int getPredictions(float[] probs){
@@ -230,6 +253,16 @@ public class MainActivity extends AppCompatActivity {
 
         //return the mapped byte buffer
         return fileChannel.map(FileChannel.MapMode.READ_ONLY,startOffset,length);
+    }
+
+    // Makes sure the TTS engine stops and shuts down properly
+    @Override
+    protected void onDestroy() {
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+        super.onDestroy();
     }
 
 

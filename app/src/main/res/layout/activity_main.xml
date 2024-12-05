@@ -71,4 +71,10 @@
             android:layout_height="wrap_content" android:id="@+id/Prob"
             tools:layout_editor_absoluteY="376dp" tools:layout_editor_absoluteX="354dp"
             android:layout_gravity="center_horizontal" android:textSize="24sp"/>
+    <Button
+            android:text="Speak"
+            android:layout_width="wrap_content"
+            android:layout_height="55dp" android:id="@+id/Speak"
+            android:layout_weight="1"
+    android:layout_gravity="center_horizontal"/>
 </LinearLayout>
